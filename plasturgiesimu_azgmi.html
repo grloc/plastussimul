@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PLASTI-SIM V12 — GMI Cloud</title>
+<style>
+*{box-sizing:border-box}body{font-family:Arial,sans-serif;background:#111827;color:#fff;margin:0;transition:direction .2s}
+body.rtl{font-family:'Segoe UI',Tahoma,Arial,sans-serif}
+header{background:#f97316;padding:14px;text-align:center;position:relative}header h1{margin:0;font-size:21px}
+#net{position:absolute;top:10px;right:10px;border:0;border-radius:20px;padding:8px 14px;font-weight:bold;font-size:12px;min-height:36px;cursor:pointer;transition:all .2s}
+body.rtl #net{right:auto;left:10px}
+#net.on{background:#22c55e;color:#fff}#net.off{background:#ef4444;color:#fff}
+#net:active{transform:scale(.95)}
+#lang{position:absolute;top:10px;left:10px;display:flex;gap:4px}
+body.rtl #lang{left:auto;right:10px}
+#lang button{border:0;border-radius:6px;padding:8px 10px;font-weight:bold;font-size:12px;min-height:36px;cursor:pointer;background:#374151;color:#fff;transition:all .2s}
+#lang button.on{background:#111827;outline:2px solid #fff}
+#lang button:active{transform:scale(.95)}
+.top{background:#fee2e2;color:#111;text-align:center;padding:8px;font-size:13px;font-weight:bold}
+.badge{display:inline-block;background:#22c55e;color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;margin-left:8px;font-weight:bold}
+.tabs{display:flex;gap:6px;padding:10px 12px;flex-wrap:wrap}.tabs button{flex:1;min-width:100px;min-height:44px;border:0;border-radius:8px;background:#374151;color:#fff;font-weight:bold;cursor:pointer}
+.tabs button.on{background:#f97316}
+.tabs button.ai{background:#7c3aed}.tabs button.ai.on{background:#a855f7}
+.card{background:#fff;color:#111;margin:0 12px 12px;padding:16px;border-radius:12px}
+label{display:block;margin:12px 0 4px;font-weight:bold}select,input,textarea{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;font-size:16px;font-family:inherit}
+textarea{resize:vertical;min-height:70px}
+input[type=range]{padding:0}input[type=checkbox]{width:auto}
+input:focus-visible,select:focus-visible,button:focus-visible,textarea:focus-visible{outline:3px solid #f97316;outline-offset:2px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:10px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.b{background:#f3f4f6;padding:12px;border-radius:8px;text-align:center;margin:6px 0}.b b{display:block;font-size:17px}
+.green{background:#dcfce7;border:2px solid #22c55e}.orange{background:#ffedd5;border:2px solid #f97316}.red{background:#fee2e2;border:2px solid #ef4444}.blue{background:#dbeafe;border:2px solid #3b82f6}
+.purple{background:#ede9fe;border:2px solid #a855f7}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #ddd;padding:7px;text-align:left;vertical-align:top}th{background:#111827;color:#fff}
+body.rtl th,body.rtl td{text-align:right}
+small{color:#555}.sc{overflow-x:auto}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.actions button{flex:1;min-width:120px;min-height:40px;border:0;border-radius:8px;background:#3b82f6;color:#fff;font-weight:bold;cursor:pointer;font-size:13px}
+.actions button:hover{opacity:.9}
+.actions button.alt{background:#22c55e}.actions button.warn{background:#f97316}.actions button.ai{background:#7c3aed}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 20px;border-radius:8px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
+#toast.show{opacity:1}
+#chatBox{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;height:340px;overflow-y:auto;margin-top:10px;font-size:14px}
+.msg{margin:8px 0;padding:10px 12px;border-radius:10px;max-width:90%;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+.msg.user{background:#dbeafe;margin-left:auto;text-align:right}
+.msg.ai{background:#ede9fe;margin-right:auto}
+.msg.sys{background:#fef3c7;font-size:12px;text-align:center;margin:8px auto;max-width:100%}
+.msg.err{background:#fee2e2;color:#991b1b;font-size:12px}
+.msg .role{font-weight:bold;font-size:11px;text-transform:uppercase;display:block;margin-bottom:4px;opacity:.7}
+#aiStatus{font-size:12px;padding:6px 10px;border-radius:6px;margin-top:8px;text-align:center;font-weight:bold}
+#aiStatus.ok{background:#dcfce7;color:#166534}
+#aiStatus.off{background:#fee2e2;color:#991b1b}
+#aiStatus.wait{background:#fef3c7;color:#92400e}
+#gmiBillingBox{background:#ede9fe;padding:12px;border-radius:8px;margin-top:10px;border:2px solid #a855f7}
+#gmiSubNote{margin-top:8px;font-size:12px;padding:8px;border-radius:6px}
+details summary{cursor:pointer;font-weight:bold;padding:8px 0}
+@media(max-width:600px){.g,.g3{grid-template-columns:1fr}#lang button{padding:6px 8px;font-size:11px}.msg{max-width:100%}}
+</style></head><body>
+<header><h1>PLASTI-SIM V12 <span class="badge" id="scoreBadge">…</span></h1><div id="subtitle">Simulateur plasturgie, 100 % hors ligne</div>
+<div id="lang"><button data-l="fr" class="on">FR</button><button data-l="ar">AR</button><button data-l="en">EN</button></div>
+<button id="net" class="off" aria-label="Basculer mode hors ligne">📡 Hors ligne</button></header>
+<div class="top" id="topWarn">Valeurs indicatives : vérifier la fiche technique du grade exact. Un POM ou un PVC trop chaud dégage du formaldéhyde ou du HCl.</div>
+<div class="tabs" id="tabs"><button class="on" data-t="1" data-i18n="tab1">Matière</button><button data-t="2" data-i18n="tab2">Mélange</button><button data-t="3" data-i18n="tab3">Produit</button><button data-t="4" data-i18n="tab4">Extrusion</button><button data-t="5" data-i18n="tab5">Gaine</button><button class="ai" data-t="6" data-i18n="tabAI">🤖 IA Plasturgie</button></div>
+
+<div id="p1" class="card"><h2 data-i18n="h1">Matière pure</h2>
+<small data-i18n="h1s">Tg : passage de l'état rigide à l'état mou. Tm : fusion des cristaux. Tproc : réglage machine. Marge verte ≥ 40 °C, orange 20-40, rouge < 20.</small>
+<label data-i18n="mat">Matière</label><select id="mat"></select>
+<label data-i18n="chg">Charge</label><select id="chg"><option value="0" data-i18n="chg0">Aucune</option><option value="10" data-i18n="chg1">Talc 20 % (+10)</option><option value="18" data-i18n="chg2">Fibre de verre 30 % (+18)</option><option value="8" data-i18n="chg3">Carbonate 20 % (+8)</option><option value="-5" data-i18n="chg4">Plastifiant (-5)</option></select>
+<label data-i18n="mfi">Fluidité (MFI)</label><select id="mfi"><option value="0" data-i18n="mfi0">Moyen</option><option value="10" data-i18n="mfi1">Bas, épais (+10)</option><option value="-10" data-i18n="mfi2">Haut, liquide (-10)</option></select>
+<div id="o1"></div>
+<div class="actions"><button onclick="copyResult('o1')" data-i18n="copy">📋 Copier</button><button class="warn" onclick="saveAll()" data-i18n="save">💾 Sauvegarder</button><button class="ai" onclick="askAIAbout('matiere')">🤖 Demander à l'IA</button></div></div>
+
+<div id="p2" class="card" style="display:none"><h2 data-i18n="h2">Mélange</h2>
+<label data-i18n="mat1">Matière 1</label><select id="m1"></select>
+<label><span data-i18n="part1">Part de la matière 1 (% en masse) :</span> <span id="v1">70</span></label><input type="range" id="w1" min="10" max="90" value="70">
+<label data-i18n="mat2">Matière 2</label><select id="m2"></select>
+<label data-i18n="cp">Compatibilisant ajouté (3-5 %)</label><select id="cp"><option value="0" data-i18n="no">Non</option><option value="1" data-i18n="yes">Oui</option></select>
+<div id="o2"></div>
+<small data-i18n="h2s">Fox (fractions massiques, kelvin) : 1/Tg = w1/Tg1 + w2/Tg2. Valable uniquement pour un couple miscible.</small>
+<div class="actions"><button onclick="copyResult('o2')" data-i18n="copy">📋 Copier</button><button class="ai" onclick="askAIAbout('melange')">🤖 Demander à l'IA</button></div></div>
+
+<div id="p3" class="card" style="display:none"><h2 data-i18n="h3">Produit dédié</h2>
+<label><span data-i18n="tu">T d'utilisation max (°C) :</span> <span id="vT">80</span></label><input type="range" id="tu" min="-40" max="240" value="80">
+<label><span data-i18n="tn">T d'utilisation min (°C) :</span> <span id="vt">-10</span></label><input type="range" id="tn" min="-40" max="50" value="-10">
+<label data-i18n="rig">Rigidité</label><select id="rig"><option data-i18n="rig0">Souple</option><option selected data-i18n="rig1">Semi-rigide</option><option data-i18n="rig2">Rigide</option><option data-i18n="rig3">Très rigide</option></select>
+<label data-i18n="tr">Transparent</label><select id="tr"><option data-i18n="no">Non</option><option data-i18n="yes">Oui</option></select>
+<label data-i18n="al">Contact alimentaire</label><select id="al"><option data-i18n="no">Non</option><option data-i18n="yes">Oui</option></select>
+<label data-i18n="uvs">Résistance UV</label><select id="uvs"><option data-i18n="no">Non</option><option data-i18n="yes">Oui</option></select>
+<label data-i18n="ch">Résistance au choc</label><select id="ch"><option data-i18n="ch0">Faible</option><option selected data-i18n="ch1">Moyenne</option><option data-i18n="ch2">Élevée</option></select>
+<label data-i18n="pr">Procédé</label><select id="pr"><option value="I" data-i18n="pr0">Injection</option><option value="E" selected data-i18n="pr1">Extrusion</option><option value="S" data-i18n="pr2">Soufflage</option><option value="P" data-i18n="pr3">Impression 3D</option></select>
+<label data-i18n="bu">Budget</label><select id="bu"><option data-i18n="bu0">Économique</option><option selected data-i18n="bu1">Standard</option><option data-i18n="bu2">Premium</option></select>
+<div id="o3"></div><details><summary data-i18n="elim">Matières éliminées</summary><p id="el" style="font-size:13px"></p></details>
+<div class="actions"><button onclick="copyResult('o3')" data-i18n="copy">📋 Copier</button><button class="warn" onclick="saveAll()" data-i18n="save">💾 Sauvegarder</button><button class="ai" onclick="askAIAbout('produit')">🤖 Demander à l'IA</button></div></div>
+
+<div id="p4" class="card" style="display:none"><h2 data-i18n="h4a">Mélanges courants</h2>
+<div class="sc"><table id="mt"></table></div>
+<h2 data-i18n="h4b">Extrusion et refroidissement</h2>
+<label data-i18n="mat">Matière</label><select id="cm"></select>
+<label><span data-i18n="ep">Épaisseur de paroi (mm) :</span> <span id="ve">1</span></label><input type="range" id="ep" min="0.2" max="5" step="0.1" value="1">
+<label><span data-i18n="vi">Vitesse de ligne (m/min) :</span> <span id="vv">30</span></label><input type="range" id="vi" min="5" max="100" value="30">
+<label><span data-i18n="tf">T filière (°C) :</span> <span id="vf">190</span></label><input type="range" id="tf" min="150" max="320" value="190">
+<label><span data-i18n="tb">T eau (°C) :</span> <span id="vb">15</span></label><input type="range" id="tb" min="5" max="60" value="15">
+<label><span data-i18n="lb">Longueur du bac (m) :</span> <span id="vl">4</span></label><input type="range" id="lb" min="1" max="15" step="0.5" value="4">
+<label><span data-i18n="di">Diamètre (mm) :</span> <span id="vd">20</span></label><input type="range" id="di" min="2" max="100" value="20">
+<label><input type="checkbox" id="ath"> <span data-i18n="ath">La formulation contient de l'ATH (sans halogène)</span></label>
+<div id="o4"></div>
+<div class="actions"><button onclick="copyResult('o4')" data-i18n="copy">📋 Copier</button><button class="warn" onclick="saveAll()" data-i18n="save">💾 Sauvegarder</button><button class="ai" onclick="askAIAbout('extrusion')">🤖 Demander à l'IA</button></div></div>
+
+<div id="p5" class="card" style="display:none"><h2 data-i18n="h5">Gaine rétractable</h2>
+<div class="b" style="text-align:left;line-height:1.6;background:#fef3c7" id="gaineBox"></div>
+<div class="actions"><button onclick="copyResult('p5')" data-i18n="copy">📋 Copier</button><button class="ai" onclick="askAIAbout('gaine')">🤖 Demander à l'IA</button></div></div>
+
+<div id="p6" class="card" style="display:none"><h2>🤖 <span data-i18n="aiTitle">Assistant IA Plasturgie</span></h2>
+<div id="aiStatus" class="off" data-i18n="aiOffline">Mode hors ligne — active le mode en ligne pour utiliser l'IA</div>
+
+<details id="cfgDetails" open><summary data-i18n="aiConfig">⚙️ Configuration du fournisseur IA</summary>
+<label data-i18n="aiProvider">Fournisseur</label>
+<select id="aiProvider">
+<option value="gmi" selected>⭐ GMI Cloud (recommandé)</option>
+<option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
+<option value="anthropic">Anthropic (Claude 3.5 Sonnet / Haiku)</option>
+<option value="google">Google (Gemini 1.5 Pro / Flash)</option>
+<option value="mistral">Mistral (Large / Small)</option>
+<option value="deepseek">DeepSeek (Chat / Reasoner)</option>
+<option value="custom">Custom (API OpenAI-compatible)</option>
+</select>
+
+<div id="gmiBillingBox" style="display:none">
+<label data-i18n="aiBilling" style="margin-top:0">💳 Mode de facturation GMI</label>
+<select id="aiBilling">
+<option value="payg" data-i18n="aiPayg">À l'usage (pay-as-you-go)</option>
+<option value="sub" selected data-i18n="aiSub">Abonnement Coding Plan (9,99 $/mois)</option>
+</select>
+<div id="gmiSubNote"></div>
+</div>
+
+<label data-i18n="aiModel">Modèle</label>
+<select id="aiModel"></select>
+<label data-i18n="aiKey">Clé API GMI Cloud</label>
+<input type="password" id="aiKey" placeholder="gmi-...">
+<label id="aiBaseLabel" style="display:none" data-i18n="aiBase">URL de base (custom)</label>
+<input type="text" id="aiBase" placeholder="https://api.exemple.com/v1" style="display:none">
+<div class="actions"><button onclick="saveAIConfig()" class="alt" data-i18n="aiSaveCfg">💾 Enregistrer la config</button><button onclick="testAIConnection()" data-i18n="aiTest">🔌 Tester la connexion</button></div>
+</details>
+
+<div id="chatBox"></div>
+<label data-i18n="aiQuestion">Ta question (plasturgie)</label>
+<textarea id="aiInput" placeholder="Ex : pourquoi mon PP craquelle en sortie de filière ?"></textarea>
+<div class="actions">
+<button class="ai" onclick="sendToAI()" id="aiSendBtn" data-i18n="aiSend">📤 Envoyer</button>
+<button onclick="clearChat()" style="background:#ef4444" data-i18n="aiClear">🗑️ Effacer le chat</button>
+</div>
+<small data-i18n="aiDisclaimer">L'IA peut se tromper. Vérifie toujours sur la fiche technique du grade. Clé API stockée localement uniquement.</small>
+</div>
+
+<div class="card"><div style="background:#dbeafe;padding:10px;border-radius:8px;margin-bottom:10px;font-size:13px" data-i18n="v12"><b>V12 - Nouveautés :</b> GMI Cloud intégré (recommandé), mode abonnement Coding Plan 9,99 $/mois ou pay-as-you-go, standard lane illimité + modèles premium.</div>
+<div class="actions"><button id="tst" class="alt" data-i18n="tests">🧪 Tests</button><button onclick="loadAll()" data-i18n="restore">📂 Restaurer</button><button onclick="resetAll()" style="background:#ef4444" data-i18n="reset">🗑️ Reset</button></div><div id="ot"></div></div>
+
+<div id="toast"></div>
+
+<script>
+const $=i=>document.getElementById(i);
+
+/* ============ i18n ============ */
+const I18N={
+fr:{subtitle:"Simulateur plasturgie, 100 % hors ligne",topWarn:"Valeurs indicatives : vérifier la fiche technique du grade exact.",
+tab1:"Matière",tab2:"Mélange",tab3:"Produit",tab4:"Extrusion",tab5:"Gaine",tabAI:"🤖 IA Plasturgie",
+h1:"Matière pure",h1s:"Tg : passage rigide→mou. Tm : fusion cristaux. Tproc : réglage machine.",
+mat:"Matière",chg:"Charge",chg0:"Aucune",chg1:"Talc 20 % (+10)",chg2:"Fibre de verre 30 % (+18)",chg3:"Carbonate 20 % (+8)",chg4:"Plastifiant (-5)",
+mfi:"Fluidité (MFI)",mfi0:"Moyen",mfi1:"Bas (+10)",mfi2:"Haut (-10)",copy:"📋 Copier",save:"💾 Sauvegarder",restore:"📂 Restaurer",reset:"🗑️ Reset",tests:"🧪 Tests",
+h2:"Mélange",mat1:"Matière 1",part1:"Part matière 1 (% masse) :",mat2:"Matière 2",cp:"Compatibilisant (3-5 %)",no:"Non",yes:"Oui",
+h2s:"Fox : 1/Tg = w1/Tg1 + w2/Tg2. Uniquement pour couple miscible.",
+h3:"Produit dédié",tu:"T utilisation max (°C) :",tn:"T utilisation min (°C) :",rig:"Rigidité",rig0:"Souple",rig1:"Semi-rigide",rig2:"Rigide",rig3:"Très rigide",
+tr:"Transparent",al:"Contact alimentaire",uvs:"Résistance UV",ch:"Résistance au choc",ch0:"Faible",ch1:"Moyenne",ch2:"Élevée",
+pr:"Procédé",pr0:"Injection",pr1:"Extrusion",pr2:"Soufflage",pr3:"Impression 3D",bu:"Budget",bu0:"Économique",bu1:"Standard",bu2:"Premium",elim:"Matières éliminées",
+h4a:"Mélanges courants",h4b:"Extrusion et refroidissement",ep:"Épaisseur paroi (mm) :",vi:"Vitesse ligne (m/min) :",tf:"T filière (°C) :",tb:"T eau (°C) :",lb:"Longueur bac (m) :",di:"Diamètre (mm) :",
+ath:"Contient de l'ATH (sans halogène)",h5:"Gaine rétractable",
+v12:"<b>V12 - Nouveautés :</b> GMI Cloud intégré, abonnement Coding Plan 9,99 $/mois ou pay-as-you-go.",
+net_off:"📡 Hors ligne",net_on:"🌐 En ligne",toast_off:"📡 Mode hors ligne",toast_on:"🌐 Mode en ligne",toast_copy:"✅ Copié",toast_saved:"💾 Sauvegardé",toast_restored:"📂 Restauré",toast_nosave:"Aucune sauvegarde",toast_err:"⚠️ Erreur",confirm_reset:"Effacer la sauvegarde et réinitialiser ?",
+aiTitle:"Assistant IA Plasturgie",aiOffline:"Mode hors ligne — active le mode en ligne pour utiliser l'IA",aiOnline:"Mode en ligne — IA prête",
+aiConfig:"⚙️ Configuration du fournisseur IA",aiProvider:"Fournisseur",aiModel:"Modèle",aiKey:"Clé API GMI Cloud",aiBase:"URL de base (custom)",aiSaveCfg:"💾 Enregistrer la config",aiTest:"🔌 Tester la connexion",
+aiBilling:"💳 Mode de facturation GMI",aiPayg:"À l'usage (pay-as-you-go)",aiSub:"Abonnement Coding Plan (9,99 $/mois)",
+aiQuestion:"Ta question (plasturgie)",aiSend:"📤 Envoyer",aiClear:"🗑️ Effacer le chat",
+aiDisclaimer:"L'IA peut se tromper. Vérifie toujours sur la fiche technique. Clé API stockée localement uniquement.",
+aiNoKey:"⚠️ Configure ta clé API GMI Cloud.",aiThinking:"🤖 L'IA réfléchit…",aiReady:"✅ Connexion OK",aiFail:"❌ Échec de connexion",aiErrNoNet:"⚠️ Active le mode Online d'abord.",
+gmiStandard:"✅ <b>Modèle standard : illimité dans ton abonnement.</b> DeepSeek-V4-Flash, GLM-4.7-Flash, GPT-OSS-120B. Les modèles premium (Kimi K3, Claude, GPT-5.4) consomment des crédits.",
+gmiPremium:"⚠️ <b>Modèle premium sélectionné.</b> Il consomme tes crédits mensuels (1 000 en Lite). Pour un usage illimité, choisis un modèle standard : DeepSeek-V4-Flash, GLM-4.7-Flash ou GPT-OSS-120B.",
+gmiPayg:"💳 Mode pay-as-you-go : tu paies à l'usage. DeepSeek-V4-Flash ~0,05 $/M tokens, Gemini Flash-Lite ~0,10 $/M.",
+gaine:"<b>Recette de départ :</b> PEBD 60 % + EVA 25 % + PEHD 10 % + additifs 5 %.<br><b>1. Extrusion :</b> 175-195 °C, filière 185 °C, bac 15 °C.<br><b>2. Réticulation :</b> silane, peroxyde ou irradiation.<br><b>3. Expansion :</b> 120-135 °C.<br><b>Rétraction :</b> 110-125 °C, ratio 2:1 ou 3:1."},
+ar:{subtitle:"محاكي صناعة البلاستيك، دون إنترنت 100٪",topWarn:"قيم إرشادية: تحقق من ورقة البيانات.",
+tab1:"المادة",tab2:"الخلط",tab3:"المنتج",tab4:"البثق",tab5:"الغلاف",tabAI:"🤖 ذكاء اصطناعي",
+h1:"مادة خالصة",h1s:"Tg: الانتقال من الصلبة إلى اللينة. Tm: ذوبان البلورات.",
+mat:"المادة",chg:"الحشو",chg0:"بدون",chg1:"تالك 20٪ (+10)",chg2:"ألياف زجاجية 30٪ (+18)",chg3:"كربونات 20٪ (+8)",chg4:"ملدن (-5)",
+mfi:"السيولة (MFI)",mfi0:"متوسط",mfi1:"منخفض (+10)",mfi2:"عالي (-10)",copy:"📋 نسخ",save:"💾 حفظ",restore:"📂 استعادة",reset:"🗑️ إعادة",tests:"🧪 اختبارات",
+h2:"الخلط",mat1:"المادة 1",part1:"نسبة المادة 1 (٪):",mat2:"المادة 2",cp:"عامل توافق (3-5٪)",no:"لا",yes:"نعم",
+h2s:"Fox: 1/Tg = w1/Tg1 + w2/Tg2.",
+h3:"منتج مخصص",tu:"أقصى درجة (°م):",tn:"أدنى درجة (°م):",rig:"الصلابة",rig0:"لين",rig1:"شبه صلب",rig2:"صلب",rig3:"صلب جداً",
+tr:"شفاف",al:"ملامسة غذائية",uvs:"مقاومة UV",ch:"مقاومة الصدمات",ch0:"ضعيف",ch1:"متوسط",ch2:"عالي",
+pr:"العملية",pr0:"حقن",pr1:"بثق",pr2:"نفخ",pr3:"طباعة 3D",bu:"الميزانية",bu0:"اقتصادي",bu1:"قياسي",bu2:"ممتاز",elim:"المواد المستبعدة",
+h4a:"خلطات شائعة",h4b:"البثق والتبريد",ep:"سمك الجدار (مم):",vi:"سرعة الخط (م/د):",tf:"درجة الفوهة (°م):",tb:"درجة الماء (°م):",lb:"طول الحوض (م):",di:"القطر (مم):",
+ath:"يحتوي على ATH",h5:"غلاف قابل للتقلص",
+v12:"<b>V12 - الجديد:</b> GMI Cloud مدمج، اشتراك 9,99 $/شهر أو دفع حسب الاستخدام.",
+net_off:"📡 دون اتصال",net_on:"🌐 متصل",toast_off:"📡 وضع عدم الاتصال",toast_on:"🌐 وضع الاتصال",toast_copy:"✅ تم النسخ",toast_saved:"💾 تم الحفظ",toast_restored:"📂 تم الاستعادة",toast_nosave:"لا يوجد حفظ",toast_err:"⚠️ خطأ",confirm_reset:"مسح الحفظ؟",
+aiTitle:"مساعد الذكاء الاصطناعي",aiOffline:"وضع عدم الاتصال — فعّل الوضع المتصل",aiOnline:"وضع متصل — جاهز",
+aiConfig:"⚙️ إعداد المزود",aiProvider:"المزود",aiModel:"النموذج",aiKey:"مفتاح API GMI Cloud",aiBase:"URL (مخصص)",aiSaveCfg:"💾 حفظ",aiTest:"🔌 اختبار",
+aiBilling:"💳 وضع الفوترة GMI",aiPayg:"حسب الاستخدام",aiSub:"اشتراك Coding Plan (9,99 $/شهر)",
+aiQuestion:"سؤالك",aiSend:"📤 إرسال",aiClear:"🗑️ مسح",
+aiDisclaimer:"قد يخطئ الذكاء الاصطناعي. تحقق دائمًا. المفتاح محلي فقط.",
+aiNoKey:"⚠️ قم بإعداد مفتاح API.",aiThinking:"🤖 يفكر…",aiReady:"✅ اتصال ناجح",aiFail:"❌ فشل",aiErrNoNet:"⚠️ فعّل الوضع المتصل.",
+gmiStandard:"✅ <b>نموذج قياسي: غير محدود في اشتراكك.</b> DeepSeek-V4-Flash، GLM-4.7-Flash، GPT-OSS-120B. النماذج الممتازة تستهلك رصيداً.",
+gmiPremium:"⚠️ <b>نموذج ممتاز محدد.</b> يستهلك رصيدك الشهري (1000 في Lite). للاستخدام غير المحدود، اختر نموذجاً قياسياً.",
+gmiPayg:"💳 وضع الدفع حسب الاستخدام: DeepSeek-V4-Flash ~0,05 $/M tokens.",
+gaine:"<b>وصفة البداية:</b> PEBD 60٪ + EVA 25٪ + PEHD 10٪.<br><b>البثق:</b> 175-195 °م، الفوهة 185 °م.<br><b>التشابك:</b> سيلان، بيروكسيد أو إشعاع.<br><b>التمدد:</b> 120-135 °م.<br><b>التقلص:</b> 110-125 °م."},
+en:{subtitle:"Plastics simulator, 100% offline",topWarn:"Indicative values: check the technical data sheet.",
+tab1:"Material",tab2:"Blend",tab3:"Product",tab4:"Extrusion",tab5:"Sleeve",tabAI:"🤖 AI Plastics",
+h1:"Pure material",h1s:"Tg: rigid-to-soft transition. Tm: crystal melting.",
+mat:"Material",chg:"Filler",chg0:"None",chg1:"Talc 20% (+10)",chg2:"Glass fiber 30% (+18)",chg3:"Carbonate 20% (+8)",chg4:"Plasticizer (-5)",
+mfi:"Fluidity (MFI)",mfi0:"Medium",mfi1:"Low (+10)",mfi2:"High (-10)",copy:"📋 Copy",save:"💾 Save",restore:"📂 Restore",reset:"🗑️ Reset",tests:"🧪 Tests",
+h2:"Blend",mat1:"Material 1",part1:"Share of material 1 (%):",mat2:"Material 2",cp:"Compatibilizer (3-5%)",no:"No",yes:"Yes",
+h2s:"Fox: 1/Tg = w1/Tg1 + w2/Tg2.",
+h3:"Dedicated product",tu:"Max use T (°C):",tn:"Min use T (°C):",rig:"Rigidity",rig0:"Flexible",rig1:"Semi-rigid",rig2:"Rigid",rig3:"Very rigid",
+tr:"Transparent",al:"Food contact",uvs:"UV resistance",ch:"Impact resistance",ch0:"Low",ch1:"Medium",ch2:"High",
+pr:"Process",pr0:"Injection",pr1:"Extrusion",pr2:"Blow",pr3:"3D printing",bu:"Budget",bu0:"Economical",bu1:"Standard",bu2:"Premium",elim:"Eliminated materials",
+h4a:"Common blends",h4b:"Extrusion and cooling",ep:"Wall thickness (mm):",vi:"Line speed (m/min):",tf:"Die T (°C):",tb:"Water T (°C):",lb:"Tank length (m):",di:"Diameter (mm):",
+ath:"Contains ATH",h5:"Heat-shrink sleeve",
+v12:"<b>V12 - New:</b> GMI Cloud integrated, Coding Plan $9.99/mo or pay-as-you-go.",
+net_off:"📡 Offline",net_on:"🌐 Online",toast_off:"📡 Offline mode",toast_on:"🌐 Online mode",toast_copy:"✅ Copied",toast_saved:"💾 Saved",toast_restored:"📂 Restored",toast_nosave:"No save found",toast_err:"⚠️ Error",confirm_reset:"Clear save and reset?",
+aiTitle:"AI Plastics Assistant",aiOffline:"Offline mode — enable online mode",aiOnline:"Online mode — AI ready",
+aiConfig:"⚙️ AI provider config",aiProvider:"Provider",aiModel:"Model",aiKey:"GMI Cloud API key",aiBase:"Base URL (custom)",aiSaveCfg:"💾 Save config",aiTest:"🔌 Test connection",
+aiBilling:"💳 GMI billing mode",aiPayg:"Pay-as-you-go",aiSub:"Coding Plan subscription ($9.99/mo)",
+aiQuestion:"Your question (plastics)",aiSend:"📤 Send",aiClear:"🗑️ Clear chat",
+aiDisclaimer:"AI can be wrong. Always verify on the grade TDS. API key stored locally only.",
+aiNoKey:"⚠️ Configure your GMI Cloud API key.",aiThinking:"🤖 AI thinking…",aiReady:"✅ Connection OK",aiFail:"❌ Connection failed",aiErrNoNet:"⚠️ Enable Online mode first.",
+gmiStandard:"✅ <b>Standard model: unlimited in your subscription.</b> DeepSeek-V4-Flash, GLM-4.7-Flash, GPT-OSS-120B. Premium models (Kimi K3, Claude, GPT-5.4) consume credits.",
+gmiPremium:"⚠️ <b>Premium model selected.</b> It consumes monthly credits (1,000 in Lite). For unlimited usage, pick a standard model: DeepSeek-V4-Flash, GLM-4.7-Flash or GPT-OSS-120B.",
+gmiPayg:"💳 Pay-as-you-go: DeepSeek-V4-Flash ~$0.05/M tokens, Gemini Flash-Lite ~$0.10/M.",
+gaine:"<b>Starting recipe:</b> LDPE 60% + EVA 25% + HDPE 10%.<br><b>Extrusion:</b> 175-195 °C, die 185 °C.<br><b>Crosslinking:</b> silane, peroxide or irradiation.<br><b>Expansion:</b> 120-135 °C.<br><b>Shrinkage:</b> 110-125 °C."}};
+
+let LANG="fr";
+function applyLang(l){
+  LANG=l;document.documentElement.lang=l;document.body.classList.toggle("rtl",l==="ar");
+  const dict=I18N[l];
+  document.querySelectorAll("[data-i18n]").forEach(el=>{const k=el.dataset.i18n;if(dict[k]!==undefined)el.innerHTML=dict[k]});
+  $("subtitle").textContent=dict.subtitle;$("topWarn").textContent=dict.topWarn;$("gaineBox").innerHTML=dict.gaine;
+  const net=$("net");net.innerHTML=onlineMode?dict.net_on:dict.net_off;
+  document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===l));
+  updateAIStatus();updateGmiBillingUI();
+  upd();try{localStorage.setItem("plastisim_lang",l)}catch(e){}
+}
+
+/* ============ Base de données ============ */
+const RAW=[
+{k:"PP",tg:-10,tm:165,pmin:200,pmax:240,deg:280,mo:40,um:100,rig:1,tr:0,uv:0,al:1,ch:2,c:1.2,pr:"IESP",a:.11,lat:40,el:0,sec:"aucun"},
+{k:"PEHD",tg:-120,tm:132,pmin:190,pmax:230,deg:290,mo:30,um:90,rig:2,tr:0,uv:0,al:1,ch:3,c:1.4,pr:"IES",a:.14,lat:55,el:0,sec:"aucun"},
+{k:"PEBD",tg:-120,tm:115,pmin:170,pmax:210,deg:280,mo:30,um:80,rig:0,tr:0,uv:0,al:1,ch:3,c:1.4,pr:"IES",a:.12,lat:35,el:0,sec:"aucun"},
+{k:"PA6",tg:50,tm:220,pmin:240,pmax:270,deg:320,mo:80,um:140,rig:2,tr:0,uv:0,al:1,ch:4,c:3.5,pr:"IEP",a:.09,lat:35,el:0,sec:"4 h à 80 °C"},
+{k:"PA66",tg:55,tm:260,pmin:270,pmax:295,deg:330,mo:90,um:160,rig:3,tr:0,uv:0,al:1,ch:4,c:4,pr:"IEP",a:.09,lat:35,el:0,sec:"4 h à 80 °C"},
+{k:"POM",tg:-60,tm:175,pmin:190,pmax:210,deg:230,mo:80,um:110,rig:2,tr:0,uv:0,al:1,ch:3,c:3.8,pr:"IE",a:.10,lat:45,el:0,sec:"2 h à 80 °C"},
+{k:"PBT",tg:45,tm:225,pmin:240,pmax:260,deg:300,mo:80,um:140,rig:2,tr:0,uv:0,al:0,ch:3,c:3.2,pr:"IE",a:.09,lat:30,el:0,sec:"4 h à 120 °C"},
+{k:"PET",tg:75,tm:250,pmin:265,pmax:285,deg:320,mo:120,um:110,rig:2,tr:1,uv:0,al:1,ch:3,c:1.8,pr:"IES",a:.08,lat:25,el:0,sec:"6 h à 150 °C"},
+{k:"ABS",tg:105,tm:null,pmin:210,pmax:270,deg:280,mo:60,um:85,rig:2,tr:0,uv:0,al:0,ch:4,c:2.2,pr:"IEP",a:.09,lat:0,el:0,sec:"2 h à 80 °C"},
+{k:"PC",tg:150,tm:null,pmin:260,pmax:310,deg:340,mo:90,um:130,rig:2,tr:1,uv:0,al:0,ch:5,c:4,pr:"IEP",a:.10,lat:0,el:0,sec:"4 h à 120 °C"},
+{k:"PMMA",tg:105,tm:null,pmin:215,pmax:245,deg:280,mo:70,um:85,rig:2,tr:1,uv:1,al:1,ch:2,c:3.5,pr:"IE",a:.09,lat:0,el:0,sec:"4 h à 80 °C"},
+{k:"PS",tg:100,tm:null,pmin:200,pmax:230,deg:280,mo:50,um:80,rig:2,tr:1,uv:0,al:1,ch:1,c:1.3,pr:"IE",a:.09,lat:0,el:0,sec:"aucun"},
+{k:"SAN",tg:105,tm:null,pmin:210,pmax:240,deg:280,mo:60,um:85,rig:2,tr:1,uv:0,al:0,ch:2,c:2.5,pr:"IE",a:.09,lat:0,el:0,sec:"2 h à 80 °C"},
+{k:"ASA",tg:110,tm:null,pmin:225,pmax:255,deg:300,mo:70,um:90,rig:2,tr:0,uv:1,al:0,ch:4,c:4,pr:"IEP",a:.09,lat:0,el:0,sec:"4 h à 90 °C"},
+{k:"PVC",tg:80,tm:null,pmin:160,pmax:185,deg:200,mo:40,um:60,rig:1,tr:0,uv:0,al:0,ch:2,c:1.3,pr:"IE",a:.07,lat:0,el:0,sec:"aucun"},
+{k:"TPU",tg:-40,tm:160,pmin:190,pmax:215,deg:240,mo:40,um:90,rig:0,tr:0,uv:1,al:0,ch:4,c:6,pr:"IEP",a:.08,lat:5,el:0,sec:"3 h à 90 °C"},
+{k:"PLA",tg:60,tm:165,pmin:180,pmax:205,deg:240,mo:40,um:50,rig:2,tr:1,uv:0,al:1,ch:1,c:2.8,pr:"IEP",a:.08,lat:20,el:0,sec:"4 h à 60 °C"},
+{k:"PEEK",tg:143,tm:343,pmin:360,pmax:390,deg:450,mo:180,um:240,rig:3,tr:0,uv:1,al:0,ch:4,c:90,pr:"IEP",a:.10,lat:30,el:0,sec:"3 h à 150 °C"},
+{k:"EVA",tg:-30,tm:90,pmin:150,pmax:190,deg:250,mo:30,um:60,rig:0,tr:0,uv:0,al:0,ch:3,c:2,pr:"IE",a:.11,lat:15,el:0,sec:"aucun"},
+{k:"PBAT",tg:-30,tm:120,pmin:160,pmax:195,deg:250,mo:30,um:60,rig:0,tr:0,uv:0,al:1,ch:4,c:4.5,pr:"E",a:.08,lat:10,el:0,sec:"4 h à 60 °C"},
+{k:"EPDM",tg:-50,tm:null,pmin:180,pmax:220,deg:260,mo:40,um:120,rig:0,tr:0,uv:1,al:0,ch:5,c:2.8,pr:"EI",a:.09,lat:0,el:1,sec:"aucun"},
+{k:"SEBS",tg:-60,tm:null,pmin:190,pmax:230,deg:280,mo:40,um:100,rig:0,tr:0,uv:1,al:0,ch:5,c:4.2,pr:"IE",a:.09,lat:0,el:1,sec:"aucun"}];
+const DB={};RAW.forEach(r=>DB[r.k]=r);
+const INC=["PBAT","EPDM","SEBS","PEEK","PBT"];
+const RIG_I18N={fr:["Souple","Semi-rigide","Rigide","Très rigide"],ar:["لين","شبه صلب","صلب","صلب جداً"],en:["Flexible","Semi-rigid","Rigid","Very rigid"]};
+const pk=(a,b)=>[a,b].sort().join("|"),mk=l=>new Set(l.map(p=>pk(...p.split("|"))));
+const MISC=mk(["PEHD|PEBD","PEBD|EVA","PEHD|EVA","ABS|SAN","PMMA|PVDF","PPO|PS","PC|ASA"]),PART=mk(["PC|ABS","PLA|PBAT"]);
+const CO={},US={};const co=(a,b,t)=>CO[pk(a,b)]=t,us=(a,b,t)=>US[pk(a,b)]=t;
+co("PP","PEHD","EPR, EPDM ou POE");co("PP","PEBD","EPR, EPDM ou POE");co("PP","PA6","PP-g-MAH");co("PP","PA66","PP-g-MAH");co("PEHD","PA6","PE-g-MAH");co("PEBD","PA6","PE-g-MAH");co("PLA","PBAT","extenseur de chaîne ou époxy");co("PET","PA6","SEBS-g-MAH ou époxy");co("PP","EPDM","aucun greffé");co("PP","SEBS","aucun greffé");
+us("PEHD","PEBD","Gaine, film, tube");us("PEBD","EVA","Gaine rétractable, film");us("PEHD","EVA","Gaine, film");us("PP","PEHD","Bacs bas coût");us("PP","PEBD","Bacs bas coût");us("PP","PA6","Pièces auto");us("PEHD","PA6","Réservoirs");us("ABS","PC","Boîtiers, capots");us("PC","ASA","Extérieur");us("PLA","PBAT","Sachet, film");us("PP","EPDM","Pare-chocs");us("PP","SEBS","Pare-chocs");us("PS","SEBS","Pièces résistantes");us("ABS","SAN","Boîtiers");
+const mid=d=>Math.round((d.pmin+d.pmax)/2);
+function al(p,d){const m=d-p;return p>=d?["red","🔴 DÉPASSEMENT : "+p+" °C ≥ "+d+" °C"]:m<20?["red","🔴 Marge "+m+" °C : STOP"]:m<40?["orange","🟠 Marge "+m+" °C : surveille"]:["green","🟢 Marge "+m+" °C : OK"]}
+function zones(T,d){return [d.tm&&d.tm<120?Math.min(T-45,120):T-45,T-20,T,T]}
+function cls(a,b){const k=pk(a,b);return MISC.has(k)?"M":PART.has(k)?"P":"I"}
+function win(a,b){const x=DB[a],y=DB[b],lo=Math.max(x.pmin,y.pmin),hi=Math.min(x.pmax,y.pmax);return{lo,hi,ok:lo<=hi,deg:Math.min(x.deg,y.deg)}}
+
+function t1(){const k=$("mat").value,d=DB[k],T=mid(d)+ +$("chg").value+ +$("mfi").value,a=al(T,d.deg),z=zones(T,d);
+$("o1").innerHTML=`<div class="g"><div class="b">Tg<b>${d.tg} °C</b></div><div class="b">Tm<b>${d.tm?d.tm+" °C":"amorphe"}</b></div><div class="b" style="background:#ffedd5">Tproc<b>${T} °C</b></div><div class="b">Dégradation<b>${d.deg} °C</b></div><div class="b">Moule<b>${d.mo} °C</b></div><div class="b">Séchage<b>${d.sec}</b></div></div>
+<div class="b ${a[0]}">${a[1]}</div><p><b>Vis :</b> zone 1 ${Math.round(z[0])} °C, zone 2 ${z[1]} °C, zones 3-4 ${z[2]} °C, filière ${z[3]} °C<br><small>Fenêtre ${d.pmin}-${d.pmax} °C. Usage max ${d.um} °C.${k=="PC"?" ⚠️ BPA.":""}${k=="POM"?" ⚠️ Formaldéhyde.":""}${k=="PVC"?" ⚠️ HCl.":""}</small></p>`}
+
+function t2(){const a=$("m1").value,b=$("m2").value,w=+$("w1").value/100,v=1-w;$("v1").innerText=Math.round(w*100);const x=DB[a],y=DB[b],c=cls(a,b),k=pk(a,b),cp=+$("cp").value;
+if(a==b){$("o2").innerHTML='<div class="b green">Même matière.</div>';return}
+let st,cl,tx="";const rec=CO[k]||"voir fiche technique";
+if(c=="M"){st="🟢 Miscible";cl="green";const tg=1/(w/(x.tg+273.15)+v/(y.tg+273.15))-273.15;tx=`Tg (Fox) : ${Math.round(tg)} °C.`}
+else{if(c=="P"){st="🟠 Partiellement miscible";cl="orange"}else{st=cp?"🟠 Immiscible, compatibilisé":"🔴 Immiscible";cl=cp?"orange":"red"}
+tx=`Fox non valable. Tg : ${x.tg} et ${y.tg} °C.`}
+const W=win(a,b);let wt,wc;if(!W.ok){wt=`🔴 Pas de fenêtre commune`;wc="red"}else{const T=Math.round((W.lo+W.hi)/2),A=al(T,W.deg);wt=`Fenêtre ${W.lo}-${W.hi} °C, Tproc ${T} °C. ${A[1]}`;wc=A[0]}
+$("o2").innerHTML=`<div class="b ${cl}"><b>${st}</b><p>${tx}</p><p>Compatibilisant : ${rec}.</p><p>Usage : ${US[k]||"à valider"}</p></div><div class="b ${wc}">${wt}</div>`}
+
+function prod(o){const E=[],C=[],ph={Souple:0,"Semi-rigide":1,Rigide:2,"Très rigide":3},need={Faible:0,Moyenne:2,Élevée:4}[o.ch];
+for(const k in DB){const d=DB[k];let s=100,r=[];
+if(o.tu>d.um){E.push(`${k} : ${o.tu} °C > ${d.um} °C`);continue}
+if(o.tr=="Oui"&&!d.tr){E.push(k+" : pas transparent");continue}
+if(o.al=="Oui"&&!d.al){E.push(k+" : pas alimentaire");continue}
+if(!d.pr.includes(o.pr)){E.push(k+" : procédé impossible");continue}
+if(o.tn<-20&&d.tg>-20&&!d.el){s-=25;r.push("cassant au froid")}
+if(o.uv=="Oui"){if(d.uv)s+=10;else{s-=30;r.push("sans UV")}}
+const df=Math.abs(ph[o.rig]-d.rig);s-=df*15;if(df)r.push(RIG_I18N[LANG][d.rig]);
+if(d.ch<need){s-=20;r.push("choc "+d.ch+"/5")}else s+=d.ch*2;
+if(o.bu=="Économique"){if(d.c>2.5){s-=40;r.push("cher")}else s+=8}if(o.bu=="Standard"&&d.c>6){s-=25;r.push("cher")}if(o.bu=="Premium")s+=d.ch*2;
+C.push({k,d,s,r})}
+const topScore=C.filter(x=>x.s>=50).sort((a,b)=>b.s-a.s).slice(0,3);
+let top=[];
+if(topScore.length==3){const eco=[...topScore].sort((a,b)=>a.d.c-b.d.c)[0];const prem=topScore[0];const tech=topScore.find(x=>x!==eco&&x!==prem)||topScore[1];top=[eco,tech,prem];}
+else top=topScore;return{top,E}}
+
+function t3(){const o={tu:+$("tu").value,tn:+$("tn").value,rig:$("rig").value,tr:$("tr").value,al:$("al").value,uv:$("uvs").value,ch:$("ch").value,pr:$("pr").value,bu:$("bu").value};$("vT").innerText=o.tu;$("vt").innerText=o.tn;
+if(o.tn>o.tu){$("o3").innerHTML='<div class="b red">T min > T max</div>';$("el").innerHTML="";return}
+const R=prod(o),lab=R.top.length==3?[["green","Éco"],["orange","Tech"],["blue","Premium"]]:R.top.map((_,i)=>["orange","Option "+(i+1)]);
+$("o3").innerHTML=R.top.length?`<div class="g3">${R.top.map((c,i)=>`<div class="b ${lab[i][0]}"><b>${lab[i][1]} : ${c.k}</b>Tproc ${mid(c.d)} °C<br>Max ${c.d.um} °C<br>~${c.d.c} €/kg<br>Score ${Math.round(c.s)}<br><small>${c.r.join(", ")||"OK"}</small></div>`).join("")}</div>`:'<div class="b red">Aucune matière</div>';
+$("el").innerHTML=R.E.join("<br>")||"Aucune"}
+
+const MX=[["PEHD + PEBD","70/30","Miscible","190-230","aucun","Gaine"],["PE + EVA","80/20","Miscible","165-195","aucun","Gaine rétractable"],["PP + PE","70/30","Immiscible","200-230","EPR / POE","Bacs"],["PP + EPDM/SEBS","70/30","Dispersion","200-240","aucun","Pare-chocs"],["PA6 + PP","60/40","Immiscible","240-260","PP-g-MAH","Auto"],["ABS + PC","70/30","Partiel","240-280","grades commerciaux","Boîtiers"],["PC + ASA","70/30","Miscible","250-290","aucun","Extérieur"],["PLA + PBAT","70/30","Immiscible","170-200","époxy","Sachet"]];
+$("mt").innerHTML="<tr><th>Mélange</th><th>Ratio</th><th>Effet</th><th>Tproc</th><th>Compatibilisant</th><th>Usage</th></tr>"+MX.map(r=>"<tr>"+r.map(c=>"<td>"+c+"</td>").join("")+"</tr>").join("");
+
+const TDEM={ABS:70,PC:110,PMMA:80,PS:70,SAN:75,ASA:80,PVC:50,PLA:55,TPU:50,SEBS:50,EPDM:50,PBAT:50};
+function cool(k,e,tf,tb){const d=DB[k];let Td=d.el?50:TDEM[k]||(d.tm?d.tm-30:d.tg-10);if(Td<tb+10)Td=tb+10;const Ti=tf+d.lat;let q=(4/Math.PI)*(Ti-tb)/(Td-tb);if(q<1.05)q=1.05;const t=Math.max(.5,(2*e)*(2*e)/(Math.PI*Math.PI*d.a)*Math.log(q));return Math.round(t*10)/10}
+
+function t4(){const k=$("cm").value,d=DB[k],e=+$("ep").value,v=+$("vi").value,tf=+$("tf").value,tb=+$("tb").value,L=+$("lb").value,di=+$("di").value;
+$("ve").innerText=e;$("vv").innerText=v;$("vf").innerText=tf;$("vb").innerText=tb;$("vl").innerText=L;$("vd").innerText=di;
+const t=cool(k,e,tf,tb),need=Math.round(v/60*t*10)/10,vm=Math.round(60*L/t),a=al(tf,d.deg),z=zones(tf,d);
+let w="";if(tb<10)w+="<div class='b orange'>Eau très froide.</div>";if(tb>40&&!d.tm)w+="<div class='b orange'>Eau chaude.</div>";
+if($("ath").checked&&tf>190)w+="<div class='b orange'>ATH > 190 °C : décomposition.</div>";
+if(di>50&&e<1)w+="<div class='b orange'>Ovalisation possible.</div>";
+$("o4").innerHTML=`<div class="g"><div class="b">Refroidissement<b>${t} s</b></div><div class="b">Bac nécessaire<b>${need} m</b></div><div class="b">Vitesse max<b>${vm} m/min</b></div><div class="b ${need>L?"red":"green"}">${need>L?"Bac court":"Bac OK"}</div></div>${w}<div class="b ${a[0]}">${a[1]}</div><p><b>Vis :</b> ${Math.round(z[0])}/${z[1]}/${z[2]}/${z[3]} °C. Calibreur ${tb+5} °C.</p>`}
+
+function upd(){t1();t2();t3();t4()}
+
+function selfTest(silent){const T=[];const ok=(n,c)=>T.push((c?"OK ":"FAIL ")+n);
+ok("Miscibles",["PEHD|PEBD","PEBD|EVA","PEHD|EVA"].every(p=>cls(...p.split("|"))=="M"));
+ok("PP+PEHD immiscible",cls("PP","PEHD")=="I");ok("PC+ABS partiel",cls("PC","ABS")=="P");
+ok("PVC chaud = rouge",al(mid(DB.PVC)+28,DB.PVC.deg)[0]=="red");
+const base={tu:50,tn:-10,rig:"Souple",tr:"Non",al:"Non",uv:"Non",ch:"Moyenne",pr:"E",bu:"Standard"};
+ok("Souple sans PP",!prod(base).top.map(x=>x.k).includes("PP"));
+ok("Refroidissement e²",cool("PEBD",5,190,15)/cool("PEBD",1,190,15)>15);
+ok("PC+ASA miscible",cls("PC","ASA")=="M");
+ok("i18n FR/AR/EN",Object.keys(I18N).length==3);
+ok("GMI Cloud défini",!!AI_PROVIDERS.gmi && AI_PROVIDERS.gmi.base.includes("gmi-serving.com"));
+ok("GMI a modèles standard",AI_PROVIDERS.gmi.standardModels.length>=3);
+ok("Contexte IA généré",buildAIContext().length>50);
+const passed=T.filter(x=>x.startsWith("OK")).length;
+const badge=$("scoreBadge");badge.textContent=passed+"/"+T.length+" ✅";badge.style.background=passed==T.length?"#22c55e":"#ef4444";
+if(!silent)$("ot").innerHTML="<p>"+T.join("<br>")+"</p>";
+return{passed,total:T.length}}
+
+function copyResult(id){const el=$(id);if(!el)return;const txt=el.innerText.replace(/\s+/g,' ').trim();navigator.clipboard.writeText(txt).then(()=>showToast(I18N[LANG].toast_copy)).catch(()=>{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();showToast(I18N[LANG].toast_copy)})}
+function showToast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2000)}
+
+const SAVE_KEY="plastisim_v12",AI_KEY="plastisim_ai_cfg_v12";
+function saveAll(){const data={};["mat","chg","mfi","m1","w1","m2","cp","tu","tn","rig","tr","al","uvs","ch","pr","bu","cm","ep","vi","tf","tb","lb","di","ath"].forEach(id=>{const el=$(id);if(el)data[id]=el.type=="checkbox"?el.checked:el.value});data.tab=document.querySelector("#tabs button.on")?.dataset.t||"1";data.lang=LANG;try{localStorage.setItem(SAVE_KEY,JSON.stringify(data));showToast(I18N[LANG].toast_saved)}catch(e){showToast(I18N[LANG].toast_err)}}
+function loadAll(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw){showToast(I18N[LANG].toast_nosave);return}const data=JSON.parse(raw);Object.keys(data).forEach(id=>{const el=$(id);if(!el||id=="lang")return;if(el.type=="checkbox")el.checked=data[id];else el.value=data[id]});if(data.tab)document.querySelector(`#tabs button[data-t="${data.tab}"]`)?.click();if(data.lang)applyLang(data.lang);upd();showToast(I18N[LANG].toast_restored)}catch(e){showToast(I18N[LANG].toast_err)}}
+function resetAll(){if(!confirm(I18N[LANG].confirm_reset))return;localStorage.removeItem(SAVE_KEY);location.reload()}
+let saveTimer;document.addEventListener("input",()=>{clearTimeout(saveTimer);saveTimer=setTimeout(saveAll,800)});
+document.addEventListener("change",()=>{clearTimeout(saveTimer);saveTimer=setTimeout(saveAll,800)});
+
+/* ============ IA : fournisseurs (GMI en tête) ============ */
+const AI_PROVIDERS={
+gmi:{
+  name:"GMI Cloud",
+  base:"https://api.gmi-serving.com/v1",
+  models:[
+    "deepseek-ai/DeepSeek-V4-Flash-0731",
+    "google/gemini-3.1-flash-lite-preview",
+    "zai-org/GLM-4.7-Flash",
+    "anthropic/claude-sonnet-4.5",
+    "openai/gpt-5.4-mini",
+    "moonshotai/Kimi-K3"
+  ],
+  style:"openai",
+  billing:"both",
+  standardModels:["deepseek-ai/DeepSeek-V4-Flash-0731","google/gemini-3.1-flash-lite-preview","zai-org/GLM-4.7-Flash"],
+  subNote:"Coding Plan 9,99 $/mois — standard lane illimité, premium via crédits"
+},
+openai:{name:"OpenAI",base:"https://api.openai.com/v1",models:["gpt-4o","gpt-4o-mini","gpt-4-turbo"],style:"openai"},
+anthropic:{name:"Anthropic",base:"https://api.anthropic.com/v1",models:["claude-3-5-sonnet-20241022","claude-3-5-haiku-20241022"],style:"anthropic"},
+google:{name:"Google",base:"https://generativelanguage.googleapis.com/v1beta",models:["gemini-1.5-pro","gemini-1.5-flash"],style:"google"},
+mistral:{name:"Mistral",base:"https://api.mistral.ai/v1",models:["mistral-large-latest","mistral-small-latest"],style:"openai"},
+deepseek:{name:"DeepSeek",base:"https://api.deepseek.com/v1",models:["deepseek-chat","deepseek-reasoner"],style:"openai"},
+custom:{name:"Custom",base:"",models:["custom"],style:"openai"}};
+
+let onlineMode=false, aiCfg={provider:"gmi",model:"deepseek-ai/DeepSeek-V4-Flash-0731",key:"",base:"",billing:"sub"}, chatHistory=[];
+
+function setNet(on){onlineMode=on;const b=$("net");if(on){b.className="on";b.innerHTML=I18N[LANG].net_on}else{b.className="off";b.innerHTML=I18N[LANG].net_off}
+  try{localStorage.setItem("plastisim_net",on?"1":"0")}catch(e){}
+  updateAIStatus();
+  if(on){
+    const gmiMsg = aiCfg.provider==="gmi"
+      ? `<div class="msg sys">🌐 <b>GMI Cloud activé.</b> Modèle : <b>${aiCfg.model}</b>${aiCfg.billing==="sub"?" — <span style='color:#166534'>Coding Plan (standard illimité)</span>":" — pay-as-you-go"}.<br>Standard lane : DeepSeek-V4-Flash, GLM-4.7-Flash, GPT-OSS-120B.</div>`
+      : '<div class="msg sys">🌐 Mode Online activé — IA disponible.</div>';
+    $("chatBox").innerHTML+=gmiMsg;
+  }else{$("chatBox").innerHTML+='<div class="msg sys">📡 Mode Offline — IA désactivée.</div>'}
+  $("aiSendBtn").disabled=!on;
+}
+$("net").addEventListener("click",()=>{setNet(!onlineMode);showToast(onlineMode?I18N[LANG].toast_on:I18N[LANG].toast_off)});
+
+function updateAIStatus(){
+  const s=$("aiStatus");if(!s)return;
+  if(!onlineMode){s.className="off";s.textContent="📡 "+I18N[LANG].aiOffline;return}
+  if(!aiCfg.key||!aiCfg.model){s.className="wait";s.textContent="⚙️ "+I18N[LANG].aiNoKey;return}
+  const provName=AI_PROVIDERS[aiCfg.provider].name;
+  const billingTag=aiCfg.provider==="gmi"?(aiCfg.billing==="sub"?" 💳 Abonnement":" 💳 Pay-as-you-go"):"";
+  s.className="ok";s.textContent="✅ "+I18N[LANG].aiOnline+" — "+provName+" / "+aiCfg.model+billingTag;
+}
+
+function updateGmiBillingUI(){
+  const p=$("aiProvider").value;
+  const box=$("gmiBillingBox");
+  if(!box)return;
+  box.style.display = p==="gmi" ? "block" : "none";
+  if(p==="gmi"){
+    const mode=$("aiBilling").value;
+    const prov=AI_PROVIDERS.gmi;
+    const note=$("gmiSubNote");
+    if(mode==="sub"){
+      const isStandard=prov.standardModels.includes($("aiModel").value);
+      if(isStandard){note.innerHTML=I18N[LANG].gmiStandard;note.style.background="#dcfce7";note.style.color="#166534"}
+      else{note.innerHTML=I18N[LANG].gmiPremium;note.style.background="#fee2e2";note.style.color="#991b1b"}
+    }else{note.innerHTML=I18N[LANG].gmiPayg;note.style.background="#fef3c7";note.style.color="#92400e"}
+  }
+}
+
+function fillModels(){
+  const p=$("aiProvider").value,prov=AI_PROVIDERS[p];
+  $("aiModel").innerHTML=prov.models.map(m=>`<option value="${m}">${m}</option>`).join("");
+  $("aiBase").style.display=p=="custom"?"block":"none";
+  $("aiBaseLabel").style.display=p=="custom"?"block":"none";
+  if(p=="custom")$("aiBase").value=aiCfg.base||"";
+  updateGmiBillingUI();
+}
+
+function saveAIConfig(){
+  aiCfg={
+    provider:$("aiProvider").value,
+    model:$("aiModel").value,
+    key:$("aiKey").value.trim(),
+    base:$("aiBase").value.trim(),
+    billing:$("aiBilling")?$("aiBilling").value:"payg"
+  };
+  try{localStorage.setItem(AI_KEY,JSON.stringify(aiCfg));showToast(I18N[LANG].toast_saved)}catch(e){showToast(I18N[LANG].toast_err)}
+  updateAIStatus();updateGmiBillingUI();
+}
+
+function loadAIConfig(){
+  try{const raw=localStorage.getItem(AI_KEY);if(raw)aiCfg=JSON.parse(raw)}catch(e){}
+  aiCfg.provider=aiCfg.provider||"gmi";
+  aiCfg.model=aiCfg.model||AI_PROVIDERS[aiCfg.provider].models[0];
+  aiCfg.billing=aiCfg.billing||"sub";
+  $("aiProvider").value=aiCfg.provider;
+  fillModels();
+  $("aiModel").value=aiCfg.model;
+  $("aiKey").value=aiCfg.key||"";
+  $("aiBase").value=aiCfg.base||"";
+  if($("aiBilling"))$("aiBilling").value=aiCfg.billing;
+  updateGmiBillingUI();
+}
+
+$("aiProvider").addEventListener("change",()=>{fillModels()});
+$("aiModel").addEventListener("change",()=>{updateGmiBillingUI()});
+if($("aiBilling"))$("aiBilling").addEventListener("change",()=>{updateGmiBillingUI()});
+
+/* ============ Contexte automatique ============ */
+function buildAIContext(){
+  const parts=[];
+  try{const m=$("mat").value,d=DB[m];parts.push(`Matière: ${m} (Tg ${d.tg}°C, Tm ${d.tm||"amorphe"}, Tproc ${mid(d)}°C, dégradation ${d.deg}°C, usage max ${d.um}°C).`)}catch(e){}
+  try{const a=$("m1").value,b=$("m2").value,w=$("w1").value;parts.push(`Mélange: ${a}/${b} (${w}/${100-w}), ${cls(a,b)=="M"?"miscible":cls(a,b)=="P"?"partiel":"immiscible"}.`)}catch(e){}
+  try{parts.push(`Produit: T max ${$("tu").value}°C, T min ${$("tn").value}°C, rigidité ${$("rig").value}, transparent ${$("tr").value}, alimentaire ${$("al").value}, UV ${$("uvs").value}, choc ${$("ch").value}, procédé ${$("pr").value}, budget ${$("bu").value}.`)}catch(e){}
+  try{parts.push(`Extrusion: ${$("cm").value}, épaisseur ${$("ep").value} mm, vitesse ${$("vi").value} m/min, filière ${$("tf").value}°C, eau ${$("tb").value}°C, bac ${$("lb").value} m, diamètre ${$("di").value} mm, ATH ${$("ath").checked?"oui":"non"}.`)}catch(e){}
+  return parts.join("\n");
+}
+
+const SYSTEM_PROMPT=`Tu es un expert en plasturgie (ingénieur polymères, 20+ ans atelier et R&D). Tu réponds en français technique, concis et actionnable. Tu connais: Tg/Tm, MFI, cristallinité, miscibilité, compatibilisants (PP-g-MAH, SEBS-g-MAH, époxy), procédés (injection, extrusion, soufflage, 3D), séchage, dégradation (POM→formaldéhyde, PVC→HCl, PC→BPA), ATH/MDH, gaine rétractable, réticulation (silane/peroxyde/irradiation), refroidissement.
+Règles: toujours distinguer conseil général et vérification fiche technique. Signaler risques sécurité. Donner valeurs chiffrées. Rediriger si hors plasturgie. Répondre dans la langue de l'utilisateur.
+Contexte simulation:
+${buildAIContext()}`;
+
+/* ============ Appels API ============ */
+async function callAI(userMsg){
+  const prov=AI_PROVIDERS[aiCfg.provider];
+  const base=(aiCfg.provider=="custom"?aiCfg.base:prov.base).replace(/\/$/,"");
+  const key=aiCfg.key;
+  if(!key)throw new Error(I18N[LANG].aiNoKey);
+  if(prov.style=="anthropic"){
+    const r=await fetch(base+"/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:aiCfg.model,max_tokens:1500,system:SYSTEM_PROMPT,messages:[...chatHistory.filter(m=>m.role!="system"),{role:"user",content:userMsg}]})});
+    if(!r.ok)throw new Error("HTTP "+r.status+" — "+(await r.text()).slice(0,200));
+    const j=await r.json();return j.content?.[0]?.text||"(réponse vide)";
+  }
+  if(prov.style=="google"){
+    const url=base+"/models/"+aiCfg.model+":generateContent?key="+encodeURIComponent(key);
+    const contents=chatHistory.filter(m=>m.role!="system").map(m=>({role:m.role=="assistant"?"model":"user",parts:[{text:m.content}]}));
+    contents.push({role:"user",parts:[{text:userMsg}]});
+    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({systemInstruction:{parts:[{text:SYSTEM_PROMPT}]},contents})});
+    if(!r.ok)throw new Error("HTTP "+r.status+" — "+(await r.text()).slice(0,200));
+    const j=await r.json();return j.candidates?.[0]?.content?.parts?.[0]?.text||"(réponse vide)";
+  }
+  // openai-compatible (GMI, OpenAI, Mistral, DeepSeek, Custom)
+  const r=await fetch(base+"/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:aiCfg.model,temperature:0.3,max_tokens:1500,messages:[{role:"system",content:SYSTEM_PROMPT},...chatHistory.filter(m=>m.role!="system"),{role:"user",content:userMsg}]})});
+  if(!r.ok)throw new Error("HTTP "+r.status+" — "+(await r.text()).slice(0,200));
+  const j=await r.json();return j.choices?.[0]?.message?.content||"(réponse vide)";
+}
+
+function addMsg(role,text){
+  const box=$("chatBox");
+  const div=document.createElement("div");
+  div.className="msg "+role;
+  div.innerHTML=`<span class="role">${role=="user"?"👤 Toi":role=="ai"?"🤖 IA":"ℹ️"}</span>${text}`;
+  box.appendChild(div);box.scrollTop=box.scrollHeight;
+}
+function clearChat(){chatHistory=[];$("chatBox").innerHTML='<div class="msg sys">Chat effacé.</div>'}
+
+async function sendToAI(){
+  if(!onlineMode){showToast(I18N[LANG].aiErrNoNet);return}
+  if(!aiCfg.key){showToast(I18N[LANG].aiNoKey);$("cfgDetails").open=true;return}
+  const q=$("aiInput").value.trim();if(!q)return;
+  $("aiInput").value="";
+  addMsg("user",q);chatHistory.push({role:"user",content:q});
+  addMsg("sys",I18N[LANG].aiThinking);
+  $("aiSendBtn").disabled=true;
+  try{
+    const ans=await callAI(q);
+    const box=$("chatBox");const last=box.lastChild;if(last&&last.classList.contains("sys"))last.remove();
+    addMsg("ai",ans);chatHistory.push({role:"assistant",content:ans});
+  }catch(e){
+    const box=$("chatBox");const last=box.lastChild;if(last&&last.classList.contains("sys"))last.remove();
+    addMsg("err","❌ "+e.message);
+  }finally{$("aiSendBtn").disabled=false}
+}
+
+async function testAIConnection(){
+  if(!onlineMode){showToast(I18N[LANG].aiErrNoNet);return}
+  if(!aiCfg.key){showToast(I18N[LANG].aiNoKey);return}
+  addMsg("sys",I18N[LANG].aiThinking);
+  try{
+    const r=await callAI("Réponds simplement 'OK' pour tester la connexion.");
+    const box=$("chatBox");const last=box.lastChild;if(last&&last.classList.contains("sys"))last.remove();
+    addMsg("ai","✅ "+I18N[LANG].aiReady+"\n\n"+r.slice(0,150));
+  }catch(e){
+    const box=$("chatBox");const last=box.lastChild;if(last&&last.classList.contains("sys"))last.remove();
+    addMsg("err","❌ "+I18N[LANG].aiFail+" : "+e.message);
+  }
+}
+
+function askAIAbout(scope){
+  if(!onlineMode){showToast(I18N[LANG].aiErrNoNet);return}
+  document.querySelector('#tabs button[data-t="6"]').click();
+  const prompts={
+    matiere:"Analyse la matière sélectionnée. Donne-moi: (1) les 3 points de vigilance majeurs, (2) un conseil de réglage machine, (3) un risque sécurité éventuel.",
+    melange:"Analyse le mélange en cours. Donne-moi: (1) la compatibilité et le compatibilisant idéal, (2) la plage de température procédé, (3) les risques de délaminage.",
+    produit:"Analyse la sélection produit. Compare les 3 matières proposées et dis-moi laquelle retenir selon un critère de robustesse industrielle, pas seulement de score.",
+    extrusion:"Analyse le réglage extrusion. Donne-moi: (1) si le bac est correctement dimensionné, (2) un conseil sur la température filière, (3) les défauts probables.",
+    gaine:"Explique-moi pas à pas comment produire une gaine rétractable avec les paramètres actuels. Quels sont les 3 points critiques ?"
+  };
+  $("aiInput").value=prompts[scope]||"Analyse la simulation en cours.";
+  setTimeout(()=>sendToAI(),300);
+}
+
+/* ============ Init ============ */
+try{setNet(localStorage.getItem("plastisim_net")==="1")}catch(e){setNet(false)}
+document.querySelectorAll("#lang button").forEach(b=>b.addEventListener("click",()=>{applyLang(b.dataset.l);showToast(b.dataset.l==="fr"?"Français":b.dataset.l==="ar"?"العربية":"English")}));
+const op=Object.keys(DB).map(k=>`<option value="${k}">${k}</option>`).join("");
+["mat","m1","m2","cm"].forEach(i=>$(i).innerHTML=op);$("m1").value="PP";$("m2").value="PEHD";$("cm").value="PEBD";
+document.querySelectorAll("#tabs button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("#tabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");for(let i=1;i<=6;i++)$("p"+i).style.display=i==b.dataset.t?"block":"none";window.scrollTo(0,0)}));
+document.addEventListener("input",upd);document.addEventListener("change",upd);$("tst").addEventListener("click",()=>selfTest(false));
+$("aiInput").addEventListener("keydown",e=>{if(e.key=="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();sendToAI()}});
+loadAIConfig();fillModels();
+upd();
+selfTest(true);
+let savedLang="fr";try{savedLang=localStorage.getItem("plastisim_lang")||"fr"}catch(e){}
+applyLang(savedLang);
+try{if(localStorage.getItem(SAVE_KEY)){const raw=JSON.parse(localStorage.getItem(SAVE_KEY));if(raw.lang)applyLang(raw.lang);loadAll()}}catch(e){}
+$("aiSendBtn").disabled=!onlineMode;
+</script></body></html>
