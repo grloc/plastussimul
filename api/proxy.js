@@ -1,6 +1,6 @@
-
+// api/proxy.js
 export default async function handler(req, res) {
-  // Autoriser ton site Vercel à appeler ce proxy
+  // Autoriser les appels depuis ton site Vercel
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -14,19 +14,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    // On relaie la requête vers GMI Cloud
+    // On récupère la clé API depuis les variables d'environnement de Vercel
+    const apiKey = process.env.GMI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
+    // On transfère la requête à GMI Cloud
     const response = await fetch('https://api.gmi-serving.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': req.headers.authorization, // Ta clé API passe ici
+        'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(req.body),
+      body: JSON.stringify(req.body)
     });
 
     const data = await response.json();
-    res.status(response.status).json(data);
+    return res.status(response.status).json(data);
   } catch (error) {
-    res.status(500).json({ error: 'Proxy error', details: error.message });
+    return res.status(500).json({ error: 'Proxy error', details: error.message });
   }
 }
